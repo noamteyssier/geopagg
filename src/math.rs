@@ -55,4 +55,10 @@ mod tests {
         let weights = vec![3.0, 2.0, 1.0];
         assert_relative_eq!(weighted_geometric_mean(&x, &weights), 1.5130857494229015);
     }
+
+    #[test]
+    fn test_arithmetic_mean() {
+        let x = vec![1., 2., 3.];
+        assert_relative_eq!(arithmetic_mean(&x), 2.0);
+    }
 }
