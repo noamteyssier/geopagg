@@ -27,13 +27,12 @@ pub fn aggregate_pvalues(pvalues: &mut [f64], weight_config: WeightConfig) -> f6
 pub fn empirical_fdr(gene_results: &mut [GeneResult]) {
     gene_results.sort_unstable_by(|a, b| a.wgm.partial_cmp(&b.wgm).unwrap());
 
-    let num_genes = gene_results.len();
     let mut amalgam_count = 0;
-    for gene_result in gene_results.iter_mut() {
+    for (rank, gene_result) in gene_results.iter_mut().enumerate() {
         if gene_result.amalgam {
             amalgam_count += 1;
         }
-        gene_result.empirical_fdr = amalgam_count as f64 / num_genes as f64;
+        gene_result.empirical_fdr = amalgam_count as f64 / (rank + 1) as f64;
         gene_result.adjusted_empirical_fdr = gene_result.empirical_fdr.max(gene_result.wgm);
     }
 }
