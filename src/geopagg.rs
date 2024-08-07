@@ -44,6 +44,13 @@ impl<'a> GeoPAGG<'a> {
         }
     }
 
+    /// Run the GeoPAGG algorithm
+    ///
+    /// The GeoPAGG algorithm is a four-step process:
+    /// 1. Build the amalgam groups
+    /// 2. Aggregate each gene
+    /// 3. Aggregate the amalgam groups
+    /// 4. Combine the results and calculate the empirical FDR
     pub fn run(&self) -> GeoPAGGResults {
         let unique_genes = self.genes.iter().unique().collect::<Vec<_>>();
 
@@ -95,6 +102,9 @@ impl<'a> GeoPAGG<'a> {
     }
 
     /// Builds the amalgam groups
+    ///
+    /// The amalgam groups are built by randomly selecting sgRNAs from the null set
+    /// but matching the membership sizes and distributions of the unique genes.
     fn build_amalgams(
         &self,
         group_sizes: &Vec<(usize, usize)>,
@@ -123,6 +133,10 @@ impl<'a> GeoPAGG<'a> {
         amalgams
     }
 
+    /// Process a single gene
+    ///
+    /// This function aggregates the pvalues and logfc for a single gene
+    /// and returns the results in a `GeneResult` struct.
     fn process_gene(&self, gene: &str) -> GeneResult {
         let gene_indices = index_mask(gene, self.genes);
         let mut pvalues = select_indices(&gene_indices, &self.pvalues);
