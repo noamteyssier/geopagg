@@ -50,7 +50,7 @@ impl<'a> GeoPAGG<'a> {
         // Build the amalgam groups
         let mut rng = ChaCha8Rng::seed_from_u64(self.seed as u64);
         let null_set = self.distinguish_null_set();
-        let group_sizes = calculate_group_sizes(&self.genes);
+        let group_sizes = calculate_group_sizes(self.genes, &unique_genes);
         let amalgams = self.build_amalgams(&group_sizes, &null_set, &mut rng);
 
         // Aggregate each gene
