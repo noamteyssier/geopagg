@@ -27,3 +27,59 @@ pub fn calculate_group_sizes(genes: &[String], unique_genes: &[&String]) -> Vec<
     }
     group_sizes.into_iter().collect()
 }
+
+#[cfg(test)]
+mod testing {
+    use itertools::Itertools;
+
+    #[test]
+    fn test_index_mask() {
+        let haystack = vec!["a".to_string(), "b".to_string(), "c".to_string()];
+        let needle = "a";
+        let result = super::index_mask(needle, &haystack);
+        assert_eq!(result, vec![0]);
+    }
+
+    #[test]
+    fn test_select_indices() {
+        let data = vec!["a", "b", "c"];
+        let indices = vec![0, 2];
+        let result = super::select_indices(&indices, &data);
+        assert_eq!(result, vec!["a", "c"]);
+    }
+
+    #[test]
+    fn test_calculate_group_sizes() {
+        let genes = vec![
+            "a".to_string(),
+            "a".to_string(),
+            "b".to_string(),
+            "c".to_string(),
+        ];
+        let unique_genes = vec![String::from("a"), String::from("b"), String::from("c")];
+        let unique_gene_references = unique_genes.iter().collect::<Vec<_>>();
+        let result = super::calculate_group_sizes(&genes, &unique_gene_references);
+
+        assert!(result.iter().contains(&(1, 2)));
+        assert!(result.iter().contains(&(2, 1)));
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn test_calculate_group_sizes_with_duplicates() {
+        let genes = vec![
+            "a".to_string(),
+            "a".to_string(),
+            "b".to_string(),
+            "b".to_string(),
+            "c".to_string(),
+        ];
+        let unique_genes = vec![String::from("a"), String::from("b"), String::from("c")];
+        let unique_gene_references = unique_genes.iter().collect::<Vec<_>>();
+        let result = super::calculate_group_sizes(&genes, &unique_gene_references);
+
+        assert!(result.iter().contains(&(2, 2)));
+        assert!(result.iter().contains(&(1, 1)));
+        assert_eq!(result.len(), 2);
+    }
+}
