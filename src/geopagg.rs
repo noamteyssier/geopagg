@@ -1,6 +1,7 @@
 use itertools::Itertools;
 use rand::{seq::IteratorRandom, SeedableRng};
 use rand_chacha::ChaCha8Rng;
+use rayon::prelude::*;
 
 use crate::{
     amalgam::Amalgam,
@@ -49,18 +50,18 @@ impl<'a> GeoPAGG<'a> {
         // Build the amalgam groups
         let mut rng = ChaCha8Rng::seed_from_u64(self.seed as u64);
         let null_set = self.distinguish_null_set();
-        let group_sizes = calculate_group_sizes(self.genes);
+        let group_sizes = calculate_group_sizes(&self.genes);
         let amalgams = self.build_amalgams(&group_sizes, &null_set, &mut rng);
 
         // Aggregate each gene
         let test_results = unique_genes
-            .iter()
+            .par_iter()
             .map(|gene| self.process_gene(gene))
             .collect::<Vec<_>>();
 
         // Aggregate the amalgams
         let amalgam_results = amalgams
-            .into_iter()
+            .into_par_iter()
             .map(|amalgam| amalgam.into())
             .collect::<Vec<_>>();
 
