@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use itertools::Itertools;
+
 pub fn index_mask(needle: &str, haystack: &[String]) -> Vec<usize> {
     haystack
         .iter()
@@ -15,8 +17,9 @@ pub fn select_indices<T: Copy>(indices: &[usize], data: &[T]) -> Vec<T> {
 
 /// Calculates the membership sizes of each gene and the occurence of each membership size
 pub fn calculate_group_sizes(genes: &[String]) -> Vec<(usize, usize)> {
+    let unique_genes = genes.iter().unique().collect::<Vec<_>>();
     let mut group_sizes = HashMap::new();
-    for gene in genes {
+    for gene in unique_genes {
         let gene_indices = index_mask(gene, genes);
         let membership_size = gene_indices.len();
         if let Some(group_size) = group_sizes.get_mut(&membership_size) {
