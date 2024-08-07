@@ -46,4 +46,19 @@ impl GeoPAGGResults {
             adjusted_empirical_fdr,
         }
     }
+
+    pub fn pprint(&self) {
+        println!("Gene\tWGM\tLogFC\tAmalgam\tEmpirical FDR\tAdjusted Empirical FDR");
+        for i in 0..self.genes.len() {
+            println!(
+                "{}\t{}\t{}\t{}\t{}\t{}",
+                self.genes[i],
+                self.wgms[i],
+                self.logfcs[i],
+                self.amalgams[i],
+                self.empirical_fdr[i],
+                self.adjusted_empirical_fdr[i]
+            );
+        }
+    }
 }
