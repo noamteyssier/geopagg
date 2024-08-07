@@ -1,3 +1,5 @@
+use adjustp::{adjust, Procedure};
+
 #[derive(Debug, Clone, Copy)]
 pub enum WeightConfig {
     Balanced,
@@ -15,6 +17,22 @@ impl WeightConfig {
                 weights[0] = *alpha;
                 weights
             }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum TransformConfig {
+    Identity,
+    Fdr,
+    Bonferroni,
+}
+impl TransformConfig {
+    pub fn transform(&self, pvalues: &[f64]) -> Vec<f64> {
+        match self {
+            TransformConfig::Identity => pvalues.to_vec(),
+            TransformConfig::Fdr => adjust(pvalues, Procedure::BenjaminiHochberg),
+            TransformConfig::Bonferroni => adjust(pvalues, Procedure::Bonferroni),
         }
     }
 }

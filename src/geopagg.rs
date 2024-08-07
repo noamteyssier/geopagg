@@ -4,7 +4,7 @@ use rand_chacha::ChaCha8Rng;
 
 use crate::{
     amalgam::Amalgam,
-    config::WeightConfig,
+    config::{TransformConfig, WeightConfig},
     math::{aggregate_pvalues, arithmetic_mean, empirical_fdr},
     results::{GeneResult, GeoPAGGResults},
     utils::{calculate_group_sizes, index_mask, select_indices},
@@ -15,7 +15,7 @@ use crate::{
 /// GeoPAGG
 /// Geometric P-Value Aggregation for Gene Grouping
 pub struct GeoPAGG<'a> {
-    pvalues: &'a [f64],
+    pvalues: Vec<f64>,
     logfc: &'a [f64],
     genes: &'a [String],
     token: Option<&'a str>,
@@ -29,8 +29,10 @@ impl<'a> GeoPAGG<'a> {
         genes: &'a [String],
         token: Option<&'a str>,
         weight_config: WeightConfig,
+        transform_config: TransformConfig,
         seed: usize,
     ) -> Self {
+        let pvalues = transform_config.transform(pvalues);
         Self {
             pvalues,
             logfc,
@@ -105,7 +107,7 @@ impl<'a> GeoPAGG<'a> {
                     .iter()
                     .copied()
                     .choose_multiple(rng, *membership_size);
-                let pvalues = select_indices(&random_indices, self.pvalues);
+                let pvalues = select_indices(&random_indices, &self.pvalues);
                 let logfc = select_indices(&random_indices, self.logfc);
                 let amalgam = Amalgam::new(
                     *membership_size,
@@ -122,7 +124,7 @@ impl<'a> GeoPAGG<'a> {
 
     fn process_gene(&self, gene: &str) -> GeneResult {
         let gene_indices = index_mask(gene, self.genes);
-        let mut pvalues = select_indices(&gene_indices, self.pvalues);
+        let mut pvalues = select_indices(&gene_indices, &self.pvalues);
         let logfc = select_indices(&gene_indices, self.logfc);
 
         // Aggregate the pvalues

@@ -3,6 +3,15 @@
 version = 3
 
 [[package]]
+name = "adjustp"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0e02cfdd4ee28c4fff044e993a514fd3856b5e1b561a3e882338bcdc55966df"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.86"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -56,6 +65,7 @@ checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
 name = "geopagg"
 version = "0.1.0"
 dependencies = [
+ "adjustp",
  "anyhow",
  "approx",
  "derive-new",
