@@ -2,6 +2,12 @@
 name = "geopagg"
 version = "0.1.0"
 edition = "2021"
+description = "An implementation of the geopagg algorithm for p-value aggregation of sgRNAs across gene groupings"
+license = "MIT"
+documentation = "https://docs.rs/geopagg"
+repository = "https://github.com/noamteyssier/geopagg"
+keywords = ["CRISPR", "bioinformatics", "sequencing", "sgRNA"]
+categories = ["science"]
 
 [dependencies]
 adjustp = "0.1.6"
