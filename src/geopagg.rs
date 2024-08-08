@@ -11,10 +11,7 @@ use crate::{
     utils::{calculate_group_sizes, index_mask, select_indices},
 };
 
-/// An implementation of the GeoPAGG Algorithm
-///
-/// GeoPAGG
-/// Geometric P-Value Aggregation for Gene Grouping
+/// Implementation of the GeoPAGG (Geometric P-Value Aggregation for Gene Grouping) Algorithm
 pub struct GeoPAGG<'a> {
     pvalues: Vec<f64>,
     logfc: &'a [f64],
@@ -23,7 +20,19 @@ pub struct GeoPAGG<'a> {
     weight_config: WeightConfig,
     seed: usize,
 }
+
 impl<'a> GeoPAGG<'a> {
+    /// Creates a new GeoPAGG instance
+    ///
+    /// # Arguments
+    ///
+    /// * `pvalues` - Slice of p-values for each sgRNA
+    /// * `logfc` - Slice of log fold changes for each sgRNA
+    /// * `genes` - Slice of gene names for each sgRNA
+    /// * `token` - Optional token for filtering genes
+    /// * `weight_config` - Configuration for p-value weighting
+    /// * `transform_config` - Configuration for p-value transformation
+    /// * `seed` - Seed for random number generation
     pub fn new(
         pvalues: &'a [f64],
         logfc: &'a [f64],
@@ -44,13 +53,17 @@ impl<'a> GeoPAGG<'a> {
         }
     }
 
-    /// Run the GeoPAGG algorithm
+    /// Runs the GeoPAGG algorithm
     ///
-    /// The GeoPAGG algorithm is a four-step process:
+    /// This method performs the following steps:
     /// 1. Build the amalgam groups
     /// 2. Aggregate each gene
     /// 3. Aggregate the amalgam groups
     /// 4. Combine the results and calculate the empirical FDR
+    ///
+    /// # Returns
+    ///
+    /// A `GeoPAGGResults` struct containing the analysis results
     pub fn run(&self) -> GeoPAGGResults {
         let unique_genes = self.genes.iter().unique().collect::<Vec<_>>();
 
@@ -85,10 +98,8 @@ impl<'a> GeoPAGG<'a> {
 
     /// Returns the indices of all sgRNAs that can be incorporated into the amalgam groups
     ///
-    /// In the case where a token is provided, the amalgam groups are defined as the groups of
-    /// sgRNAs whose genes match the token.
-    ///
-    /// Otherwise all sgRNAs are considered for amalgam inclusion.
+    /// If a token is provided, only sgRNAs whose genes match the token are included.
+    /// Otherwise, all sgRNAs are considered for amalgam inclusion.
     fn distinguish_null_set(&self) -> Vec<usize> {
         let mut null_set = Vec::new();
         if let Some(token) = &self.token {
@@ -103,8 +114,8 @@ impl<'a> GeoPAGG<'a> {
 
     /// Builds the amalgam groups
     ///
-    /// The amalgam groups are built by randomly selecting sgRNAs from the null set
-    /// but matching the membership sizes and distributions of the unique genes.
+    /// Amalgam groups are built by randomly selecting sgRNAs from the null set,
+    /// matching the membership sizes and distributions of the unique genes.
     fn build_amalgams(
         &self,
         group_sizes: &Vec<(usize, usize)>,
@@ -133,22 +144,21 @@ impl<'a> GeoPAGG<'a> {
         amalgams
     }
 
-    /// Process a single gene
+    /// Processes a single gene
     ///
-    /// This function aggregates the pvalues and logfc for a single gene
+    /// This function aggregates the p-values and log fold changes for a single gene
     /// and returns the results in a `GeneResult` struct.
     fn process_gene(&self, gene: &str) -> GeneResult {
         let gene_indices = index_mask(gene, self.genes);
         let mut pvalues = select_indices(&gene_indices, &self.pvalues);
         let logfc = select_indices(&gene_indices, self.logfc);
 
-        // Aggregate the pvalues
+        // Aggregate the p-values
         let wgm = aggregate_pvalues(&mut pvalues, self.weight_config);
 
-        // Aggregate the logfc as standard mean
+        // Aggregate the log fold changes as standard mean
         let logfc = arithmetic_mean(&logfc);
 
-        // Return the results
         GeneResult::new(gene.to_string(), wgm, logfc, false)
     }
 }
