@@ -33,6 +33,7 @@ impl<'a> GeoPAGG<'a> {
     /// * `weight_config` - Configuration for p-value weighting
     /// * `transform_config` - Configuration for p-value transformation
     /// * `seed` - Seed for random number generation
+    #[must_use]
     pub fn new(
         pvalues: &'a [f64],
         logfc: &'a [f64],

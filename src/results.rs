@@ -32,6 +32,7 @@ pub struct GeoPAGGResults {
     pub adjusted_empirical_fdr: Vec<f64>,
 }
 impl GeoPAGGResults {
+    #[must_use]
     pub fn from_vec(mut gene_results: Vec<GeneResult>) -> Self {
         let mut genes = vec![];
         let mut wgms = vec![];

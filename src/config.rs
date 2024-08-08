@@ -60,6 +60,7 @@ impl TransformConfig {
     /// # Returns
     ///
     /// A vector of transformed f64 p-values
+    #[must_use]
     pub fn transform(&self, pvalues: &[f64]) -> Vec<f64> {
         match self {
             TransformConfig::Identity => pvalues.to_vec(),
