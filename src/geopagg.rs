@@ -163,3 +163,51 @@ impl<'a> GeoPAGG<'a> {
         GeneResult::new(gene.to_string(), wgm, logfc, false)
     }
 }
+
+#[cfg(test)]
+mod testing {
+    use super::*;
+
+    #[test]
+    fn test_geopagg() {
+        let pvalues = vec![0.1, 0.2, 0.3, 0.4, 0.5];
+        let logfc = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let genes = vec![
+            "A".to_string(),
+            "B".to_string(),
+            "A".to_string(),
+            "B".to_string(),
+            "A".to_string(),
+        ];
+        let token = None;
+        let weight_config = WeightConfig::Balanced;
+        let transform_config = TransformConfig::Identity;
+        let seed = 42;
+
+        let geopagg = GeoPAGG::new(
+            &pvalues,
+            &logfc,
+            &genes,
+            token,
+            weight_config,
+            transform_config,
+            seed,
+        );
+        let results = geopagg.run();
+
+        // 2 unique genes, 2 amalgam groups
+        assert_eq!(results.empirical_fdr.len(), 4);
+
+        // Checks that the results are sorted by gene name
+        for i in 0..results.genes.len() - 1 {
+            assert!(results.genes[i] <= results.genes[i + 1]);
+        }
+
+        // Checks that the proper genes are present
+        // A, B, amalgam_3_0, amalgam_2_0
+        for gene in &["A", "B", "amalgam_3_0", "amalgam_2_0"] {
+            assert!(results.genes.contains(&gene.to_string()));
+        }
+        assert_eq!(results.genes.len(), 4);
+    }
+}
