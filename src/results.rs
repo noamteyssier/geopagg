@@ -7,6 +7,18 @@ pub struct GeneResult {
     pub empirical_fdr: f64,
     pub adjusted_empirical_fdr: f64,
 }
+impl GeneResult {
+    pub fn new(gene: String, wgm: f64, logfc: f64, amalgam: bool) -> Self {
+        Self {
+            gene,
+            wgm,
+            logfc,
+            amalgam,
+            empirical_fdr: 1.0,          // initialized to 1.0 and adjusted later
+            adjusted_empirical_fdr: 1.0, // initialized to 1.0 and adjusted later
+        }
+    }
+}
 
 pub struct GeoPAGGResults {
     pub genes: Vec<String>,

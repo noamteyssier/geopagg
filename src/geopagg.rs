@@ -148,13 +148,7 @@ impl<'a> GeoPAGG<'a> {
         // Aggregate the logfc as standard mean
         let logfc = arithmetic_mean(&logfc);
 
-        GeneResult {
-            gene: gene.to_string(),
-            wgm,
-            logfc,
-            amalgam: false,
-            empirical_fdr: 1.0,
-            adjusted_empirical_fdr: 1.0,
-        }
+        // Return the results
+        GeneResult::new(gene.to_string(), wgm, logfc, false)
     }
 }
