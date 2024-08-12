@@ -66,7 +66,8 @@ impl<'a> GeoPAGG<'a> {
     ///
     /// A `GeoPAGGResults` struct containing the analysis results
     pub fn run(&self) -> GeoPAGGResults {
-        let unique_genes = self.genes.iter().unique().collect::<Vec<_>>();
+        let mut unique_genes = self.genes.iter().unique().collect::<Vec<_>>();
+        unique_genes.sort();
 
         // Build the amalgam groups
         let mut rng = ChaCha8Rng::seed_from_u64(self.seed as u64);
@@ -209,5 +210,88 @@ mod testing {
             assert!(results.genes.contains(&gene.to_string()));
         }
         assert_eq!(results.genes.len(), 4);
+    }
+
+    #[test]
+    fn test_seeding() {
+        let pvalues = vec![0.1, 0.2, 0.3, 0.4, 0.5];
+        let logfc = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let genes = vec![
+            "A".to_string(),
+            "B".to_string(),
+            "A".to_string(),
+            "B".to_string(),
+            "A".to_string(),
+        ];
+        let token = None;
+        let weight_config = WeightConfig::Balanced;
+        let transform_config = TransformConfig::Identity;
+
+        // Seed 42
+        // Should be deterministic
+        let mut last_42 = vec![];
+        for idx in 0..1000 {
+            let seed = 42;
+            let geopagg = GeoPAGG::new(
+                &pvalues,
+                &logfc,
+                &genes,
+                token,
+                weight_config,
+                transform_config,
+                seed,
+            );
+            let results = geopagg.run();
+            if idx > 0 {
+                assert_eq!(results.adjusted_empirical_fdr, last_42);
+            }
+            last_42 = results.adjusted_empirical_fdr;
+        }
+
+        // Seed 0
+        // Should be different from 42
+        // but also deterministic
+        let mut last_0 = vec![];
+        for idx in 0..1000 {
+            let seed = 0;
+            let geopagg = GeoPAGG::new(
+                &pvalues,
+                &logfc,
+                &genes,
+                token,
+                weight_config,
+                transform_config,
+                seed,
+            );
+            let results = geopagg.run();
+            assert_ne!(results.adjusted_empirical_fdr, last_42);
+            if idx > 0 {
+                dbg!(idx);
+                dbg!(&last_0);
+                dbg!(&results.adjusted_empirical_fdr);
+                assert_eq!(results.adjusted_empirical_fdr, last_0);
+            }
+            last_0 = results.adjusted_empirical_fdr;
+        }
+        // Test that the results are deterministic
+        for seed in 0..100 {
+            let mut last_seed = vec![];
+            for idx in 0..50 {
+                let geopagg = GeoPAGG::new(
+                    &pvalues,
+                    &logfc,
+                    &genes,
+                    token,
+                    weight_config,
+                    transform_config,
+                    seed,
+                );
+                let results = geopagg.run();
+                if idx > 0 {
+                    assert_eq!(results.adjusted_empirical_fdr, last_seed);
+                }
+                last_seed = results.adjusted_empirical_fdr;
+            }
+        }
     }
 }

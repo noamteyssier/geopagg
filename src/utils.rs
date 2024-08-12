@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use itertools::Itertools;
+
 pub fn index_mask(needle: &str, haystack: &[String]) -> Vec<usize> {
     haystack
         .iter()
@@ -25,7 +27,7 @@ pub fn calculate_group_sizes(genes: &[String], unique_genes: &[&String]) -> Vec<
             group_sizes.insert(membership_size, 1);
         }
     }
-    group_sizes.into_iter().collect()
+    group_sizes.into_iter().sorted().collect()
 }
 
 #[cfg(test)]
