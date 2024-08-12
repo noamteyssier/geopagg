@@ -1,6 +1,6 @@
 [package]
 name = "geopagg"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 description = "An implementation of the geopagg algorithm for p-value aggregation of sgRNAs across gene groupings"
 license = "MIT"
