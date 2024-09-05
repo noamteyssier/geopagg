@@ -1,3 +1,4 @@
+use bon::bon;
 use itertools::Itertools;
 use rand::{seq::IteratorRandom, SeedableRng};
 use rand_chacha::ChaCha8Rng;
@@ -21,6 +22,7 @@ pub struct GeoPAGG<'a> {
     seed: usize,
 }
 
+#[bon]
 impl<'a> GeoPAGG<'a> {
     /// Creates a new GeoPAGG instance
     ///
@@ -33,13 +35,15 @@ impl<'a> GeoPAGG<'a> {
     /// * `weight_config` - Configuration for p-value weighting
     /// * `transform_config` - Configuration for p-value transformation
     /// * `seed` - Seed for random number generation
-    #[must_use]
+    #[builder]
     pub fn new(
         pvalues: &'a [f64],
         logfc: &'a [f64],
         genes: &'a [String],
         token: Option<&'a str>,
+        #[builder(default)] //
         weight_config: WeightConfig,
+        #[builder(default)] //
         transform_config: TransformConfig,
         seed: usize,
     ) -> Self {
@@ -161,7 +165,11 @@ impl<'a> GeoPAGG<'a> {
         // Aggregate the log fold changes as standard mean
         let logfc = arithmetic_mean(&logfc);
 
-        GeneResult::new(gene.to_string(), wgm, logfc, false)
+        GeneResult::builder()
+            .gene(gene.to_string())
+            .wgm(wgm)
+            .logfc(logfc)
+            .build()
     }
 }
 
@@ -180,20 +188,15 @@ mod testing {
             "B".to_string(),
             "A".to_string(),
         ];
-        let token = None;
-        let weight_config = WeightConfig::Balanced;
-        let transform_config = TransformConfig::Identity;
         let seed = 42;
 
-        let geopagg = GeoPAGG::new(
-            &pvalues,
-            &logfc,
-            &genes,
-            token,
-            weight_config,
-            transform_config,
-            seed,
-        );
+        let geopagg = GeoPAGG::builder()
+            .pvalues(&pvalues)
+            .logfc(&logfc)
+            .genes(&genes)
+            .seed(seed)
+            .build();
+
         let results = geopagg.run();
 
         // 2 unique genes, 2 amalgam groups
@@ -223,24 +226,18 @@ mod testing {
             "B".to_string(),
             "A".to_string(),
         ];
-        let token = None;
-        let weight_config = WeightConfig::Balanced;
-        let transform_config = TransformConfig::Identity;
 
         // Seed 42
         // Should be deterministic
         let mut last_42 = vec![];
         for idx in 0..1000 {
             let seed = 42;
-            let geopagg = GeoPAGG::new(
-                &pvalues,
-                &logfc,
-                &genes,
-                token,
-                weight_config,
-                transform_config,
-                seed,
-            );
+            let geopagg = GeoPAGG::builder()
+                .pvalues(&pvalues)
+                .logfc(&logfc)
+                .genes(&genes)
+                .seed(seed)
+                .build();
             let results = geopagg.run();
             if idx > 0 {
                 assert_eq!(results.adjusted_empirical_fdr, last_42);
@@ -254,15 +251,12 @@ mod testing {
         let mut last_0 = vec![];
         for idx in 0..1000 {
             let seed = 0;
-            let geopagg = GeoPAGG::new(
-                &pvalues,
-                &logfc,
-                &genes,
-                token,
-                weight_config,
-                transform_config,
-                seed,
-            );
+            let geopagg = GeoPAGG::builder()
+                .pvalues(&pvalues)
+                .logfc(&logfc)
+                .genes(&genes)
+                .seed(seed)
+                .build();
             let results = geopagg.run();
             assert_ne!(results.adjusted_empirical_fdr, last_42);
             if idx > 0 {
@@ -277,15 +271,12 @@ mod testing {
         for seed in 0..100 {
             let mut last_seed = vec![];
             for idx in 0..50 {
-                let geopagg = GeoPAGG::new(
-                    &pvalues,
-                    &logfc,
-                    &genes,
-                    token,
-                    weight_config,
-                    transform_config,
-                    seed,
-                );
+                let geopagg = GeoPAGG::builder()
+                    .pvalues(&pvalues)
+                    .logfc(&logfc)
+                    .genes(&genes)
+                    .seed(seed)
+                    .build();
                 let results = geopagg.run();
                 if idx > 0 {
                     assert_eq!(results.adjusted_empirical_fdr, last_seed);
