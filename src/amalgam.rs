@@ -34,6 +34,11 @@ impl From<Amalgam> for GeneResult {
         let wgm = aggregate_pvalues(&mut pvalues, amalgam.weight_config);
         let logfc = arithmetic_mean(&amalgam.logfc);
         let gene = format!("amalgam_{}_{}", amalgam.membership_size, amalgam.draw_index);
-        GeneResult::new(gene, wgm, logfc, true)
+        GeneResult::builder()
+            .gene(gene)
+            .wgm(wgm)
+            .logfc(logfc)
+            .amalgam(true)
+            .build()
     }
 }

@@ -1,9 +1,10 @@
 use adjustp::{adjust, Procedure};
 
 /// Configurations for weighting p-values in the GeoPAGG algorithm
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub enum WeightConfig {
     /// Equal weights for all p-values
+    #[default]
     Balanced,
     /// Weights increase linearly with rank
     ///
@@ -40,9 +41,10 @@ impl WeightConfig {
 }
 
 /// Configurations for transforming p-values in the GeoPAGG algorithm
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default)]
 pub enum TransformConfig {
     /// No transformation
+    #[default]
     Identity,
     /// False Discovery Rate correction (Benjamini-Hochberg)
     Fdr,

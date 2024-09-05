@@ -1,26 +1,17 @@
+use bon::builder;
+
 #[derive(Debug, Clone)]
+#[builder]
 pub struct GeneResult {
     pub gene: String,
     pub wgm: f64,
     pub logfc: f64,
+    #[builder(default = false)]
     pub amalgam: bool,
+    #[builder(default = 1.0)]
     pub empirical_fdr: f64,
+    #[builder(default = 1.0)]
     pub adjusted_empirical_fdr: f64,
-}
-impl GeneResult {
-    /// Creates a new GeneResult
-    ///
-    /// `empirical_fdr` and `adjusted_empirical_fdr` are initialized to 1.0 and adjusted later in `empirical_fdr` calculations.
-    pub fn new(gene: String, wgm: f64, logfc: f64, amalgam: bool) -> Self {
-        Self {
-            gene,
-            wgm,
-            logfc,
-            amalgam,
-            empirical_fdr: 1.0,          // initialized to 1.0
-            adjusted_empirical_fdr: 1.0, // initialized to 1.0
-        }
-    }
 }
 
 pub struct GeoPAGGResults {

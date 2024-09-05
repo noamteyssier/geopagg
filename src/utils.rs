@@ -58,7 +58,7 @@ mod testing {
             "b".to_string(),
             "c".to_string(),
         ];
-        let unique_genes = vec![String::from("a"), String::from("b"), String::from("c")];
+        let unique_genes = [String::from("a"), String::from("b"), String::from("c")];
         let unique_gene_references = unique_genes.iter().collect::<Vec<_>>();
         let result = super::calculate_group_sizes(&genes, &unique_gene_references);
 
@@ -76,7 +76,7 @@ mod testing {
             "b".to_string(),
             "c".to_string(),
         ];
-        let unique_genes = vec![String::from("a"), String::from("b"), String::from("c")];
+        let unique_genes = [String::from("a"), String::from("b"), String::from("c")];
         let unique_gene_references = unique_genes.iter().collect::<Vec<_>>();
         let result = super::calculate_group_sizes(&genes, &unique_gene_references);
 
