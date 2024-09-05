@@ -7,7 +7,7 @@ use rayon::prelude::*;
 use crate::{
     amalgam::Amalgam,
     config::{TransformConfig, WeightConfig},
-    math::{aggregate_pvalues, arithmetic_mean, empirical_fdr},
+    math::{aggregate_pvalues, arithmetic_mean, empirical_fdr, empirical_fdr_product},
     results::{GeneResult, GeoPAGGResults},
     utils::{calculate_group_sizes, index_mask, select_indices},
 };
@@ -19,6 +19,8 @@ pub struct GeoPAGG<'a> {
     genes: &'a [String],
     token: Option<&'a str>,
     weight_config: WeightConfig,
+    use_product: bool,
+    ascending: bool,
     seed: usize,
 }
 
@@ -45,6 +47,10 @@ impl<'a> GeoPAGG<'a> {
         weight_config: WeightConfig,
         #[builder(default)] //
         transform_config: TransformConfig,
+        #[builder(default)] //
+        use_product: bool,
+        #[builder(default)] //
+        ascending: bool,
         seed: usize,
     ) -> Self {
         let pvalues = transform_config.transform(pvalues);
@@ -54,6 +60,8 @@ impl<'a> GeoPAGG<'a> {
             genes,
             token,
             weight_config,
+            use_product,
+            ascending,
             seed,
         }
     }
@@ -97,7 +105,14 @@ impl<'a> GeoPAGG<'a> {
             .chain(amalgam_results)
             .collect::<Vec<_>>();
 
-        empirical_fdr(&mut results);
+        // Calculate the empirical FDR
+        if self.use_product {
+            // Using the product of p-values and logfc can be thought of as stepping diagonally on the volcano plot.
+            empirical_fdr_product(&mut results, self.ascending)
+        } else {
+            // Using the p-values by default can be thought of as stepping vertically on the volcano plot.
+            empirical_fdr(&mut results)
+        }
 
         GeoPAGGResults::from_vec(results)
     }

@@ -119,6 +119,44 @@ pub fn empirical_fdr(gene_results: &mut [GeneResult]) {
     }
 }
 
+/// Calculates the empirical False Discovery Rate (FDR) for each gene result using the gene-product approach.
+///
+/// The product of each gene is defined as its log2 fold change (LFC) multiplied by the negative log10 of its p-value.
+///
+/// # Arguments
+///
+/// * `gene_results` - A mutable slice of `GeneResult` structures.
+///
+/// # Description
+///
+/// This function performs the following steps:
+/// 1. Sorts the gene results by their weighted geometric mean (WGM) in ascending order.
+/// 2. For each gene result:
+///    - Counts the number of amalgams with a lower or equal WGM.
+///    - Calculates the empirical FDR as (number of amalgams) / (current rank).
+///    - Calculates the adjusted empirical FDR as `max(empirical FDR, WGM)`.
+///
+/// # Note
+///
+/// This function modifies the input `gene_results` in place, updating the `empirical_fdr`
+/// and `adjusted_empirical_fdr` fields of each `GeneResult`.
+pub fn empirical_fdr_product(gene_results: &mut [GeneResult], ascending: bool) {
+    if ascending {
+        gene_results.sort_unstable_by(|a, b| a.product.partial_cmp(&b.product).unwrap());
+    } else {
+        gene_results.sort_unstable_by(|a, b| b.product.partial_cmp(&a.product).unwrap());
+    }
+
+    let mut amalgam_count = 0;
+    for (rank, gene_result) in gene_results.iter_mut().enumerate() {
+        if gene_result.amalgam {
+            amalgam_count += 1;
+        }
+        gene_result.empirical_fdr = amalgam_count as f64 / (rank + 1) as f64;
+        gene_result.adjusted_empirical_fdr = gene_result.empirical_fdr.max(gene_result.wgm);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

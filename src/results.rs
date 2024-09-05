@@ -12,6 +12,8 @@ pub struct GeneResult {
     pub empirical_fdr: f64,
     #[builder(default = 1.0)]
     pub adjusted_empirical_fdr: f64,
+    #[builder(skip = -logfc * wgm.ln())]
+    pub product: f64,
 }
 
 pub struct GeoPAGGResults {
