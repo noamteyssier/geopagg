@@ -9,7 +9,7 @@ use crate::{
     config::{TransformConfig, WeightConfig},
     math::{aggregate_pvalues, arithmetic_mean, empirical_fdr, empirical_fdr_product},
     results::{GeneResult, GeoPAGGResults},
-    utils::{calculate_group_sizes, index_mask, select_indices},
+    utils::{calculate_group_sizes, index_mask, select_indices, zscore_transform},
 };
 
 /// Implementation of the GeoPAGG (Geometric P-Value Aggregation for Gene Grouping) Algorithm
@@ -22,6 +22,7 @@ pub struct GeoPAGG<'a> {
     use_product: bool,
     ascending: bool,
     seed: usize,
+    zscore_threshold: Option<f64>,
 }
 
 #[bon]
@@ -52,6 +53,7 @@ impl<'a> GeoPAGG<'a> {
         #[builder(default)] //
         ascending: bool,
         seed: usize,
+        zscore_threshold: Option<f64>,
     ) -> Self {
         let pvalues = transform_config.transform(pvalues);
         Self {
@@ -63,6 +65,7 @@ impl<'a> GeoPAGG<'a> {
             use_product,
             ascending,
             seed,
+            zscore_threshold,
         }
     }
 
@@ -83,7 +86,10 @@ impl<'a> GeoPAGG<'a> {
 
         // Build the amalgam groups
         let mut rng = ChaCha8Rng::seed_from_u64(self.seed as u64);
-        let null_set = self.distinguish_null_set();
+        let mut null_set = self.distinguish_null_set();
+        if let Some(zscore_threshold) = self.zscore_threshold {
+            null_set = self.filter_null_set(&null_set, &self.pvalues, zscore_threshold);
+        }
         let group_sizes = calculate_group_sizes(self.genes, &unique_genes);
         let amalgams = self.build_amalgams(&group_sizes, &null_set, &mut rng);
 
@@ -131,6 +137,23 @@ impl<'a> GeoPAGG<'a> {
         }
 
         null_set
+    }
+
+    /// Filters the null set based on the z-score threshold
+    fn filter_null_set(
+        &self,
+        null_set: &[usize],
+        pvalues: &[f64],
+        zscore_threshold: f64,
+    ) -> Vec<usize> {
+        let null_pvalues = select_indices(null_set, pvalues);
+        let zscores = zscore_transform(&null_pvalues);
+        null_set
+            .iter()
+            .zip(zscores)
+            .filter(|(_, zscore)| zscore.abs() < zscore_threshold)
+            .map(|(index, _)| *index)
+            .collect()
     }
 
     /// Builds the amalgam groups

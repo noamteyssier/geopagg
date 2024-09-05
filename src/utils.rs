@@ -11,6 +11,14 @@ pub fn index_mask(needle: &str, haystack: &[String]) -> Vec<usize> {
         .collect()
 }
 
+/// Transforms a vector of values into z-scores
+pub fn zscore_transform(values: &[f64]) -> Vec<f64> {
+    let mean = values.iter().sum::<f64>() / values.len() as f64;
+    let variance = values.iter().map(|x| (x - mean).powi(2)).sum::<f64>() / values.len() as f64;
+    let std_dev = variance.sqrt();
+    values.iter().map(|x| (x - mean) / std_dev).collect()
+}
+
 pub fn select_indices<T: Copy>(indices: &[usize], data: &[T]) -> Vec<T> {
     indices.iter().map(|i| data[*i]).collect()
 }
@@ -83,5 +91,21 @@ mod testing {
         assert!(result.iter().contains(&(2, 2)));
         assert!(result.iter().contains(&(1, 1)));
         assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn test_zscore_transform() {
+        let x = vec![1.0, 2.0, 3.0, 4.0, 5.0];
+        let z = super::zscore_transform(&x);
+        let expected = [
+            -f64::sqrt(2.0),
+            -0.7071067811865475,
+            0.0,
+            0.7071067811865475,
+            f64::sqrt(2.0),
+        ];
+        for (a, b) in z.iter().zip(expected.iter()) {
+            assert!((a - b).abs() < 1e-10);
+        }
     }
 }
