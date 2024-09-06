@@ -108,4 +108,20 @@ mod testing {
             assert!((a - b).abs() < 1e-10);
         }
     }
+
+    #[test]
+    fn test_zscore_transform_ooo() {
+        let x = vec![5.0, 4.0, 3.0, 2.0, 1.0];
+        let z = super::zscore_transform(&x);
+        let expected = [
+            f64::sqrt(2.0),
+            0.7071067811865475,
+            0.0,
+            -0.7071067811865475,
+            -f64::sqrt(2.0),
+        ];
+        for (a, b) in z.iter().zip(expected.iter()) {
+            assert!((a - b).abs() < 1e-10);
+        }
+    }
 }

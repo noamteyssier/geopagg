@@ -110,11 +110,18 @@ pub fn empirical_fdr(gene_results: &mut [GeneResult]) {
     gene_results.sort_unstable_by(|a, b| a.wgm.partial_cmp(&b.wgm).unwrap());
 
     let mut amalgam_count = 0;
+    let mut latest_fdr = 0.0;
     for (rank, gene_result) in gene_results.iter_mut().enumerate() {
         if gene_result.amalgam {
             amalgam_count += 1;
         }
-        gene_result.empirical_fdr = amalgam_count as f64 / (rank + 1) as f64;
+
+        // enforces strict monotonicity
+        let fdr = amalgam_count as f64 / (rank + 1) as f64;
+        latest_fdr = fdr.max(latest_fdr);
+
+        // update the gene result
+        gene_result.empirical_fdr = latest_fdr;
         gene_result.adjusted_empirical_fdr = gene_result.empirical_fdr.max(gene_result.wgm);
     }
 }
@@ -148,11 +155,14 @@ pub fn empirical_fdr_product(gene_results: &mut [GeneResult], ascending: bool) {
     }
 
     let mut amalgam_count = 0;
+    let mut latest_fdr = 0.0;
     for (rank, gene_result) in gene_results.iter_mut().enumerate() {
         if gene_result.amalgam {
             amalgam_count += 1;
         }
-        gene_result.empirical_fdr = amalgam_count as f64 / (rank + 1) as f64;
+        let fdr = amalgam_count as f64 / (rank + 1) as f64;
+        latest_fdr = fdr.max(latest_fdr);
+        gene_result.empirical_fdr = latest_fdr;
         gene_result.adjusted_empirical_fdr = gene_result.empirical_fdr.max(gene_result.wgm);
     }
 }
