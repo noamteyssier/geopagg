@@ -147,7 +147,8 @@ impl<'a> GeoPAGG<'a> {
         zscore_threshold: f64,
     ) -> Vec<usize> {
         let null_pvalues = select_indices(null_set, pvalues);
-        let zscores = zscore_transform(&null_pvalues);
+        let neg_log_pvalues: Vec<_> = null_pvalues.iter().map(|x| x.ln()).map(|x| -x).collect();
+        let zscores = zscore_transform(&neg_log_pvalues);
         null_set
             .iter()
             .zip(zscores)
