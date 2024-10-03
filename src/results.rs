@@ -1,7 +1,6 @@
-use bon::builder;
+use bon::Builder;
 
-#[derive(Debug, Clone)]
-#[builder]
+#[derive(Debug, Clone, Builder)]
 pub struct GeneResult {
     pub gene: String,
     pub wgm: f64,
