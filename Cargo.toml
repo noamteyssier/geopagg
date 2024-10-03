@@ -11,7 +11,7 @@ categories = ["science"]
 
 [dependencies]
 adjustp = "0.1.6"
-anyhow = "1.0.87"
+anyhow = "1.0.89"
 approx = "0.5.1"
 bon = "2.3.0"
 derive-new = "0.7.0"
