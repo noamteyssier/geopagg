@@ -9,7 +9,9 @@ use crate::{
     config::{TransformConfig, WeightConfig},
     math::{aggregate_pvalues, arithmetic_mean, empirical_fdr, empirical_fdr_product},
     results::{GeneResult, GeoPAGGResults},
-    utils::{calculate_group_sizes, index_mask, select_indices, zscore_transform},
+    utils::{
+        calculate_group_sizes, index_mask, index_prefix_mask, select_indices, zscore_transform,
+    },
 };
 
 /// Implementation of the GeoPAGG (Geometric P-Value Aggregation for Gene Grouping) Algorithm
@@ -130,7 +132,7 @@ impl<'a> GeoPAGG<'a> {
     fn distinguish_null_set(&self) -> Vec<usize> {
         let mut null_set = Vec::new();
         if let Some(token) = &self.token {
-            let token_indices = index_mask(token, self.genes);
+            let token_indices = index_prefix_mask(token, self.genes);
             null_set.extend(token_indices);
         } else {
             null_set.extend(0..self.genes.len());
