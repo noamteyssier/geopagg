@@ -2,11 +2,22 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
+/// Exact string matching for a needle in a haystack
 pub fn index_mask(needle: &str, haystack: &[String]) -> Vec<usize> {
     haystack
         .iter()
         .enumerate()
-        .filter(|(_, target)| target.contains(needle))
+        .filter(|(_, target)| *target == needle)
+        .map(|(i, _)| i)
+        .collect()
+}
+
+/// Prefix matching for a needle in a haystack
+pub fn index_prefix_mask(prefix: &str, haystack: &[String]) -> Vec<usize> {
+    haystack
+        .iter()
+        .enumerate()
+        .filter(|(_, target)| target.contains(prefix))
         .map(|(i, _)| i)
         .collect()
 }
@@ -46,6 +57,43 @@ mod testing {
     fn test_index_mask() {
         let haystack = vec!["a".to_string(), "b".to_string(), "c".to_string()];
         let needle = "a";
+        let result = super::index_mask(needle, &haystack);
+        assert_eq!(result, vec![0]);
+    }
+
+    #[test]
+    fn test_index_mask_shared_prefix() {
+        let haystack = vec![
+            "gene_a".to_string(),
+            "gene_a_b".to_string(),
+            "gene_a_c".to_string(),
+        ];
+        let needle = "gene_a";
+        let result = super::index_prefix_mask(needle, &haystack);
+        assert_eq!(result, vec![0, 1, 2]);
+    }
+
+    #[test]
+    fn test_index_prefix_mask() {
+        let haystack = vec![
+            "non-targeting_0001".to_string(),
+            "non-targeting_0002".to_string(),
+            "some_gene".to_string(),
+            "non-targeting_0003".to_string(),
+        ];
+        let needle = "non-targeting";
+        let result = super::index_prefix_mask(needle, &haystack);
+        assert_eq!(result, vec![0, 1, 3]);
+    }
+
+    #[test]
+    fn test_index_prefix_mask_shared_prefix() {
+        let haystack = vec![
+            "gene_a".to_string(),
+            "gene_a_b".to_string(),
+            "gene_a_c".to_string(),
+        ];
+        let needle = "gene_a";
         let result = super::index_mask(needle, &haystack);
         assert_eq!(result, vec![0]);
     }
