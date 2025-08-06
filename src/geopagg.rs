@@ -1,5 +1,6 @@
 use bon::bon;
 use itertools::Itertools;
+use log::{debug, error};
 use rand::{seq::IteratorRandom, SeedableRng};
 use rand_chacha::ChaCha8Rng;
 use rayon::prelude::*;
@@ -12,6 +13,7 @@ use crate::{
     utils::{
         calculate_group_sizes, index_mask, index_prefix_mask, select_indices, zscore_transform,
     },
+    Error,
 };
 
 /// Implementation of the GeoPAGG (Geometric P-Value Aggregation for Gene Grouping) Algorithm
@@ -82,32 +84,45 @@ impl<'a> GeoPAGG<'a> {
     /// # Returns
     ///
     /// A `GeoPAGGResults` struct containing the analysis results
-    pub fn run(&self) -> GeoPAGGResults {
+    pub fn run(&self) -> Result<GeoPAGGResults, Error> {
         let mut unique_genes = self.genes.iter().unique().collect::<Vec<_>>();
+        debug!("Sorting unique genes");
         unique_genes.sort();
 
         // Build the amalgam groups
+        debug!("Setting seed: {}", self.seed);
         let mut rng = ChaCha8Rng::seed_from_u64(self.seed as u64);
-        let mut null_set = self.distinguish_null_set();
+
+        debug!("Distinguishing elements for null set");
+        let mut null_set = self.distinguish_null_set()?;
+        debug!("Found {} elements in null set", null_set.len());
+
         if let Some(zscore_threshold) = self.zscore_threshold {
+            debug!("Setting zscore_threshold: {}", zscore_threshold);
             null_set = self.filter_null_set(&null_set, &self.pvalues, zscore_threshold);
         }
+        debug!("Calculating group sizes");
         let group_sizes = calculate_group_sizes(self.genes, &unique_genes);
+
+        debug!("Building amalgam genes");
         let amalgams = self.build_amalgams(&group_sizes, &null_set, &mut rng);
 
         // Aggregate each gene
+        debug!("Running gene aggregation");
         let test_results = unique_genes
             .par_iter()
             .map(|gene| self.process_gene(gene))
             .collect::<Vec<_>>();
 
         // Aggregate the amalgams
+        debug!("Running amalgam aggregation");
         let amalgam_results = amalgams
             .into_par_iter()
-            .map(|amalgam| amalgam.into())
-            .collect::<Vec<_>>();
+            .map(|amalgam| amalgam.try_into())
+            .collect::<Result<Vec<_>, Error>>()?;
 
         // Combine the results
+        debug!("Combining results");
         let mut results = test_results
             .into_iter()
             .chain(amalgam_results)
@@ -122,23 +137,34 @@ impl<'a> GeoPAGG<'a> {
             empirical_fdr(&mut results)
         }
 
-        GeoPAGGResults::from_vec(results)
+        Ok(GeoPAGGResults::from_vec(results))
     }
 
     /// Returns the indices of all sgRNAs that can be incorporated into the amalgam groups
     ///
     /// If a token is provided, only sgRNAs whose genes match the token are included.
     /// Otherwise, all sgRNAs are considered for amalgam inclusion.
-    fn distinguish_null_set(&self) -> Vec<usize> {
+    fn distinguish_null_set(&self) -> Result<Vec<usize>, Error> {
         let mut null_set = Vec::new();
         if let Some(token) = &self.token {
             let token_indices = index_prefix_mask(token, self.genes);
+            if token_indices.len() == 0 {
+                error!("Could not find any genes with substring: `{}`", token);
+                return Err(Error::ZeroMatchingGenesFromToken(token.to_string()));
+            } else {
+                debug!(
+                    "Including a subset of elements in null set: {} / {}",
+                    token_indices.len(),
+                    self.genes.len()
+                );
+            }
             null_set.extend(token_indices);
         } else {
+            debug!("Including all elements in null set");
             null_set.extend(0..self.genes.len());
         }
 
-        null_set
+        Ok(null_set)
     }
 
     /// Filters the null set based on the z-score threshold
@@ -238,7 +264,7 @@ mod testing {
             .seed(seed)
             .build();
 
-        let results = geopagg.run();
+        let results = geopagg.run().unwrap();
 
         // 2 unique genes, 2 amalgam groups
         assert_eq!(results.empirical_fdr.len(), 4);
@@ -279,7 +305,7 @@ mod testing {
                 .genes(&genes)
                 .seed(seed)
                 .build();
-            let results = geopagg.run();
+            let results = geopagg.run().unwrap();
             if idx > 0 {
                 assert_eq!(results.adjusted_empirical_fdr, last_42);
             }
@@ -297,7 +323,7 @@ mod testing {
                 .genes(&genes)
                 .seed(seed)
                 .build();
-            let results = geopagg.run();
+            let results = geopagg.run().unwrap();
             if idx > 0 {
                 dbg!(idx);
                 dbg!(&last_0);
@@ -316,7 +342,7 @@ mod testing {
                     .genes(&genes)
                     .seed(seed)
                     .build();
-                let results = geopagg.run();
+                let results = geopagg.run().unwrap();
                 if idx > 0 {
                     assert_eq!(results.adjusted_empirical_fdr, last_seed);
                 }
