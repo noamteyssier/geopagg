@@ -24,6 +24,10 @@ use crate::{config::WeightConfig, results::GeneResult};
 /// - Any value in `x` is less than or equal to 0.
 /// - The sum of weights is 0.
 pub fn weighted_geometric_mean(x: &[f64], weights: &[f64]) -> f64 {
+    // Skip mean over single value
+    if x.len() == 1 {
+        return x[0];
+    }
     let sum = x
         .iter()
         .zip(weights.iter())
